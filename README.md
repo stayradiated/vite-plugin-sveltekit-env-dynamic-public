@@ -34,7 +34,7 @@ After creating this plugin, I discovered [this simpler method by alexhladun-oren
 
 Update your `.storybook/main.ts` to override Vite's `resolve.alias` config:
 
-```
+```typescript
 import type { StorybookConfig } from '@storybook/sveltekit'
 import { mergeConfig } from 'vite'
 

@@ -2,7 +2,7 @@
 
 A tiny Vite plugin that makes SvelteKit components using `$env/dynamic/public` render correctly in Storybook.
 
-Storybook *claims* to support SvelteKit’s `$env/dynamic/public`, but in practice stories will throw an error when a component imports it (in both dev and static/build modes). This plugin fixes that by intercepting the import and replacing it with a virtual module that exports a static `env` object.
+Storybook *claims* to support SvelteKit’s `$env/dynamic/public`, but in practice, stories will throw an error when a component imports it (in both dev and static/build modes). This plugin fixes that by intercepting the import and replacing it with a virtual module that exports a static `env` object.
 
 ## The problem
 
@@ -26,6 +26,38 @@ can't access property "env", globalThis.__sveltekit_dev is undefined
 The component failed to render properly, likely due to a configuration issue in Storybook.
 
 @http://localhost:6006/@id/__x00__virtual:env/dynamic/public:1:20
+```
+
+## Alternate Solution (you probably don't need this plugin)
+
+After creating this plugin, I discovered [this simpler method by alexhladun-orennia](https://github.com/storybookjs/storybook/discussions/25267#discussioncomment-11375179).
+
+Update your `.storybook/main.ts` to override Vite's `resolve.alias` config:
+
+```
+import type { StorybookConfig } from '@storybook/sveltekit'
+import { mergeConfig } from 'vite'
+
+const config: StorybookConfig = {
+  // ... existing config ..
+
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      resolve: {
+        alias: {
+          '$env/dynamic/public': import.meta.resolve('./env.public.ts'),
+        },
+      },
+    }),
+}
+```
+
+And then create the `.storybook/env.public.ts` file:
+
+```typescript
+// Make storybook happy, as '$env/dynamic/public' is not defined in storybook
+// You can also override env vars here for testing.
+export const env = {};
 ```
 
 ## What this plugin does
@@ -64,7 +96,7 @@ yarn add -D vite-plugin-sveltekit-env-dynamic-public
 
 ## Usage (Storybook + SvelteKit)
 
-In `.storybook/main.ts`, add the plugin only for Storybook via a the `viteFinal` method:
+In `.storybook/main.ts`, add the plugin only for Storybook via the `viteFinal` method:
 
 ```ts
 import type { StorybookConfig } from '@storybook/sveltekit';
